@@ -26,44 +26,51 @@ where
     // stack_url.extension = stack_url.extension + &"&tab=" + &t.to_string();
     // stack_url.extension = stack_url.extension + &"&q=".to_string() + &keywords.to_query();
     // stack_url
-    return reqwest::Url::parse_with_params("https://stackoverflow.com/search?", &[("page","1"),("tab",&t.to_string()),("q",&keywords.to_query())]).unwrap();
-    
+    return reqwest::Url::parse_with_params(
+        "https://stackoverflow.com/search?",
+        &[
+            ("page", "1"),
+            ("tab", &t.to_string()),
+            ("q", &keywords.to_query()),
+        ],
+    )
+    .unwrap();
 }
 
 pub fn stack_search(url: reqwest::Url) {
-    println!("Receiving response from {}",url.to_string());
+    println!("Receiving response from {}", url.to_string());
 
     let client = reqwest::Client::new();
-    let resp = client.get(&url.to_string()).send();
+    let resp = client.get(&url.to_string()).send().unwrap();
     println!("Checking DOM");
-    match resp {
-        Ok(v) => {
-            let document = Document::from_read(v).unwrap();
+    let document = Document::from_read(v).unwrap();
 
-            // finding all instances of our class of interest
-            for node in document.find(Class("summary")) {
-                // grabbing the story rank
-                let link = node
-                    .find(Class("question-hyperlink"))
-                    .next()
-                    .unwrap()
-                    .attr("href")
-                    .unwrap();
-                let question = node
-                    .find(Class("question-hyperlink"))
-                    .next()
-                    .unwrap()
-                    .text();
-                let excerpt = node.find(Class("excerpt")).next().unwrap().text();
+    // finding all instances of our class of interest
+    for node in document.find(Class("summary")) {
+        // grabbing the story rank
+        let link = node
+            .find(Class("question-hyperlink"))
+            .next()
+            .unwrap()
+            .attr("href")
+            .unwrap();
+        let question = node
+            .find(Class("question-hyperlink"))
+            .next()
+            .unwrap()
+            .text();
+        let excerpt = node.find(Class("excerpt")).next().unwrap().text();
 
-                // printing out | rank | story headline
-                println!("{}\nhttps://stackoverflow.com/{}\n", question, link);
-            }
-        },
-        Err(e) => println!("Response not received\nerror : {} ",e)
+        // printing out | rank | story headline
+        println!("{}\nhttps://stackoverflow.com/{}\n", question, link);
     }
 }
 
+
+pub struct QuestionChoice{
+    question:String,
+    link:String
+}
 
 
 pub trait ToQuery {
@@ -78,4 +85,3 @@ impl ToQuery for Vec<String> {
         tmp
     }
 }
-

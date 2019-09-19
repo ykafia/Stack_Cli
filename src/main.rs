@@ -52,13 +52,8 @@ fn main() {
 //TODO: find class "question" and "answer accepted-answer" and display content
 // Note : To erase content of a line : \r does the job of overwriting
 
-fn dialogue() {
-    let checkboxes = &[
-        "Ice Cream",
-        "Vanilla Cupcake",
-        "Chocolate Muffin",
-        "A Pile of sweet, sweet mustard",
-    ];
+fn dialogue(checkboxes:Vec<String>) {
+   
     let selections = Checkboxes::with_theme(&ColorfulTheme::default())
         .with_prompt("Pick your food")
         .items(&checkboxes[..])
