@@ -1,43 +1,49 @@
+extern crate argparse;
+extern crate dialoguer;
 extern crate reqwest;
 extern crate select;
-extern crate dialoguer;
-extern crate argparse;
+
+mod request_builder;
+use request_builder::*;
 
 use argparse::{ArgumentParser, List, Store, StoreTrue};
 use dialoguer::{theme::ColorfulTheme, Checkboxes};
 // use select::document::Document;
 // use select::predicate::{Class, Name, Predicate};
 
-
-
 fn main() {
     let mut verbose = false;
-    // let stack_url = "https://stackoverflow.com/search?".to_string();
-    let mut keywords:Vec<String> = Vec::new();
-    let mut tab:String = "Relevance".to_string();
-    {  // this block limits scope of borrows by ap.refer() method
+
+    let mut keywords: Vec<String> = Vec::new();
+    let mut tab: String = "Relevance".to_string();
+
+    {
         let mut ap = ArgumentParser::new();
-        ap.set_description("Greet somebody.");
+        ap.set_description("Enter your stackoverflow search keywords.");
         ap.refer(&mut keywords)
-            .add_option(&["-k", "--kewords"], List,
-            "List of keywords to find");
-        ap.refer(&mut tab)
-            .add_option(&["-t","--tab"], Store,
-             "Type of research, either Relevance, Newest, Active");
+            .add_option(&["-k", "--kewords"], List, "List of keywords to find");
+        ap.refer(&mut tab).add_option(
+            &["-t", "--tab"],
+            Store,
+            "Type of research, either Relevance, Newest, Active",
+        );
         ap.refer(&mut verbose)
-            .add_option(&["-v","--verbose"], StoreTrue,
-            "Verbosity");
+            .add_option(&["-v", "--verbose"], StoreTrue, "Verbosity");
         ap.parse_args_or_exit();
     }
 
-    if verbose {
-        println!("Keywords are :");
-        for i in keywords{
-            println!("{}", i);
-        }
-        
-    }
-    dialogue();
+    // if verbose {
+    //     println!("Keywords are :");
+    //     for i in keywords{
+    //         println!("{}", i);
+    //     }
+
+    // }
+
+    // println!("{}",);
+    let x = build_request(keywords, Some(tab), Some(1));
+    println!("{}", x.to_string());
+    stack_search(x);
 }
 
 //TODO: create request builder with https://stackoverflow.com/search? page=1 & tab=Relevance & q=rust%20functionnal
@@ -45,38 +51,6 @@ fn main() {
 //TODO: find all with classes "question-summary search-result" and display content
 //TODO: find class "question" and "answer accepted-answer" and display content
 // Note : To erase content of a line : \r does the job of overwriting
-
-// fn hacker_news(url: &str) {
-
-//     let resp = reqwest::get(url).unwrap();
-//     assert!(resp.status().is_success());
-
-//     let document = Document::from_read(resp).unwrap();
-
-//     // finding all instances of our class of interest
-//     for node in document.find(Class("athing")) {
-//         // grabbing the story rank
-//         let rank = node.find(Class("rank")).next().unwrap();
-//         // finding class, then selecting article title
-//         let story = node.find(Class("title").descendant(Name("a")))
-//             .next()
-//             .unwrap()
-//             .text();
-//         // printing out | rank | story headline
-//         println!("\n | {} | {}\n", rank.text(), story);
-//         // same as above
-//         let url = node.find(Class("title").descendant(Name("a"))).next().unwrap();
-//         // however, we don't grab text
-//         // instead find the "href" attribute, which gives us the url
-//         println!("{:?}\n", url.attr("href").unwrap());
-//     }
-// }
-
-// fn stack_overflow(url:String, ){
-    
-// }
-
-
 
 fn dialogue() {
     let checkboxes = &[
