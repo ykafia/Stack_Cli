@@ -8,8 +8,6 @@ use request_builder::*;
 
 use argparse::{ArgumentParser, List, Store, StoreTrue};
 use dialoguer::{theme::ColorfulTheme, Checkboxes};
-// use select::document::Document;
-// use select::predicate::{Class, Name, Predicate};
 
 fn main() {
     let mut verbose = false;
@@ -52,11 +50,14 @@ fn main() {
 //TODO: find class "question" and "answer accepted-answer" and display content
 // Note : To erase content of a line : \r does the job of overwriting
 
-fn dialogue(checkboxes:Vec<String>) {
-   
+fn dialogue(checkboxes:Vec<QuestionChoice>) {
+    let tmp:Vec<String> = checkboxes.iter().map(|s| s.to_string()).collect();
+
+    let checks:Vec<&str> = tmp.iter().map(|s| &**s).collect();
+    
     let selections = Checkboxes::with_theme(&ColorfulTheme::default())
         .with_prompt("Pick your food")
-        .items(&checkboxes[..])
+        .items(checks.as_slice())
         .interact()
         .unwrap();
 
@@ -69,3 +70,5 @@ fn dialogue(checkboxes:Vec<String>) {
         }
     }
 }
+
+

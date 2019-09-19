@@ -1,14 +1,15 @@
 extern crate reqwest;
 extern crate select;
 
+
 use select::document::Document;
-use select::predicate::{Class, Name, Predicate};
+use select::predicate::{Class};
 use std::fmt::{Display, Formatter, Result};
 use std::string::ToString;
 
 pub fn build_request(keywords: Vec<String>, tab: Option<String>, page: Option<i32>) -> reqwest::Url
 where
-    Vec<String>: ToQuery,
+    Vec<String>: VecExtension,
 {
     let p = match page {
         Some(x) => x,
@@ -29,9 +30,9 @@ where
     return reqwest::Url::parse_with_params(
         "https://stackoverflow.com/search?",
         &[
-            ("page", "1"),
-            ("tab", &t.to_string()),
-            ("q", &keywords.to_query()),
+            ("page", p.to_string()),
+            ("tab", t.to_string()),
+            ("q", keywords.to_spaced_string()),
         ],
     )
     .unwrap();
@@ -43,7 +44,7 @@ pub fn stack_search(url: reqwest::Url) {
     let client = reqwest::Client::new();
     let resp = client.get(&url.to_string()).send().unwrap();
     println!("Checking DOM");
-    let document = Document::from_read(v).unwrap();
+    let document = Document::from_read(resp).unwrap();
 
     // finding all instances of our class of interest
     for node in document.find(Class("summary")) {
@@ -59,7 +60,7 @@ pub fn stack_search(url: reqwest::Url) {
             .next()
             .unwrap()
             .text();
-        let excerpt = node.find(Class("excerpt")).next().unwrap().text();
+        //let excerpt = node.find(Class("excerpt")).next().unwrap().text();
 
         // printing out | rank | story headline
         println!("{}\nhttps://stackoverflow.com/{}\n", question, link);
@@ -67,21 +68,33 @@ pub fn stack_search(url: reqwest::Url) {
 }
 
 
+pub trait ToStr{
+    fn to_str(&self)->&str;
+}
+
+
 pub struct QuestionChoice{
-    question:String,
-    link:String
+    pub question:String,
+    pub link:String
+}
+
+impl Display for QuestionChoice{
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{}\n{}", self.question, self.link)
+    }
 }
 
 
-pub trait ToQuery {
-    fn to_query(&self) -> String;
+
+pub trait VecExtension {
+    fn to_spaced_string(&self) -> String;
 }
-impl ToQuery for Vec<String> {
-    fn to_query(&self) -> String {
+impl VecExtension for Vec<String> {
+    fn to_spaced_string(&self) -> String {
         let mut tmp = String::new();
         for i in self {
             tmp = tmp + i + " ";
         }
         tmp
-    }
+    }    
 }
