@@ -1,9 +1,8 @@
 extern crate reqwest;
 extern crate select;
 
-
 use select::document::Document;
-use select::predicate::{Class};
+use select::predicate::Class;
 use std::fmt::{Display, Formatter, Result};
 use std::string::ToString;
 
@@ -38,10 +37,9 @@ where
     .unwrap();
 }
 
-pub fn stack_search(url: reqwest::Url) {
+pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) {
     println!("Receiving response from {}", url.to_string());
 
-    let client = reqwest::Client::new();
     let resp = client.get(&url.to_string()).send().unwrap();
     println!("Checking DOM");
     let document = Document::from_read(resp).unwrap();
@@ -67,24 +65,20 @@ pub fn stack_search(url: reqwest::Url) {
     }
 }
 
-
-pub trait ToStr{
-    fn to_str(&self)->&str;
+pub trait ToStr {
+    fn to_str(&self) -> &str;
 }
 
-
-pub struct QuestionChoice{
-    pub question:String,
-    pub link:String
+pub struct QuestionChoice {
+    pub question: String,
+    pub link: String,
 }
 
-impl Display for QuestionChoice{
+impl Display for QuestionChoice {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{}\n{}", self.question, self.link)
     }
 }
-
-
 
 pub trait VecExtension {
     fn to_spaced_string(&self) -> String;
@@ -96,5 +90,18 @@ impl VecExtension for Vec<String> {
             tmp = tmp + i + " ";
         }
         tmp
-    }    
+    }
+}
+
+pub trait SplitToVec{
+    fn split_to_vec(&self)->Vec<String>;
+}
+
+impl SplitToVec for String{
+    fn split_to_vec(&self)-> Vec<String>{
+       
+        let x = self.split_whitespace();
+        let result:Vec<String> = x.map(|s| s.to_string()).collect();
+        return result;
+    }
 }
