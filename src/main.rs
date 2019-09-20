@@ -52,12 +52,12 @@ fn Question_Check(selects: Vec<QuestionChoice>) {
 
     let checks: Vec<&str> = tmp.iter().map(|s| &**s).collect();
 
-    let selections = Select::with_theme(&ColorfulTheme::default())
+    let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Pick your Question")
         .items(checks.as_slice())
         .interact()
         .unwrap();
 
-        println!("You chose  :\n\n{}", selects[selection].question);
-    }
+    println!("You chose  :\n\n{}", selects[selection].question);
+    
 }
