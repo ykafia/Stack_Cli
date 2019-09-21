@@ -37,9 +37,9 @@ where
     .unwrap();
 }
 
-pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) {
+pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<QuestionChoice> {
     println!("Receiving response from {}", url.to_string());
-
+    let mut result: Vec<QuestionChoice> = Vec::new();
     let resp = client.get(&url.to_string()).send().unwrap();
     println!("Checking DOM");
     let document = Document::from_read(resp).unwrap();
@@ -62,7 +62,12 @@ pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) {
 
         // printing out | rank | story headline
         println!("{}\nhttps://stackoverflow.com/{}\n", question, link);
+        result.push(QuestionChoice {
+            question: question,
+            link: link.to_string(),
+        });
     }
+    return result;
 }
 
 pub trait ToStr {
@@ -93,15 +98,14 @@ impl VecExtension for Vec<String> {
     }
 }
 
-pub trait SplitToVec{
-    fn split_to_vec(&self)->Vec<String>;
+pub trait SplitToVec {
+    fn split_to_vec(&self) -> Vec<String>;
 }
 
-impl SplitToVec for String{
-    fn split_to_vec(&self)-> Vec<String>{
-       
+impl SplitToVec for String {
+    fn split_to_vec(&self) -> Vec<String> {
         let x = self.split_whitespace();
-        let result:Vec<String> = x.map(|s| s.to_string()).collect();
+        let result: Vec<String> = x.map(|s| s.to_string()).collect();
         return result;
     }
 }
