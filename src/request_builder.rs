@@ -38,10 +38,9 @@ where
 }
 
 pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<QuestionChoice> {
-    println!("Receiving response from {}", url.to_string());
+    
     let mut result: Vec<QuestionChoice> = Vec::new();
     let resp = client.get(&url.to_string()).send().unwrap();
-    println!("Checking DOM");
     let document = Document::from_read(resp).unwrap();
 
     // finding all instances of our class of interest
@@ -61,7 +60,7 @@ pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<Questio
         //let excerpt = node.find(Class("excerpt")).next().unwrap().text();
 
         // printing out | rank | story headline
-        println!("{}\nhttps://stackoverflow.com/{}\n", question, link);
+        
         result.push(QuestionChoice {
             question: question,
             link: link.to_string(),
@@ -81,7 +80,7 @@ pub struct QuestionChoice {
 
 impl Display for QuestionChoice {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "{}\n{}", self.question, self.link)
+        write!(f, "{}", self.question)
     }
 }
 

@@ -41,41 +41,54 @@ fn browser(keywords: Vec<String>, tab: String) {
     let mut quit = false;
     let client = reqwest::Client::new();
     let mut pages: Vec<reqwest::Url> = Vec::new();
-    
+
     pages.push(build_request(keywords, Some(tab), None));
     while !quit {
-        let search_list = stack_search(pages.last().unwrap(), &client);
-        let choice = question_check(&search_list);
-        if choice == "Quit"{
+        println!("first unwrap");
+        let last =  match pages.last(){
+            Some(x) => x,
+            None => {
+                println!("Could not find last value");
+                quit = true;
+                &pages[0]
+            }
+        };
+        let mut search_list = stack_search(last, &client);
+        let choice = question_check(&mut search_list);
+        if choice == "Quit" {
             quit = true;
-        }
-        if choice == "Result"{
+        } else if choice == "Result" {
             pages.pop();
+        } else {
+            println!("link {}",choice);
+            match reqwest::Url::parse(&("https://stackoverflow.com/".to_string()+&choice)) {
+                Ok(x) => pages.push(x),
+                Err(e) => println!("The link couldn't be processed\nError : {}",e)
+            };
         }
-        else {
-            let req = reqwest::Url::parse(&choice).unwrap();
-            pages.push(req);
-        }
-        
     }
 }
 
-fn question_check(values: &Vec<QuestionChoice>) -> String {
-    let selects = values.clone();
+fn question_check(values: &mut Vec<QuestionChoice>) -> String {
+    let selects = values;
     selects.push(QuestionChoice {
         question: "Return".to_string(),
         link: "Return".to_string(),
     });
+    selects.push(QuestionChoice {
+        question: "Quit".to_string(),
+        link: "Quit".to_string(),
+    });
     let tmp: Vec<String> = selects.iter().map(|s| s.to_string()).collect();
     let checks: Vec<&str> = tmp.iter().map(|s| &**s).collect();
-
+    
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Pick your Question")
         .items(checks.as_slice())
         .interact()
         .unwrap();
 
-    println!("You chose  :\n\n{}", selects[selection].question);
+    println!("You chose  :{}", selects[selection].question);
     let result = selects[selection].link.clone();
     return result;
 }
