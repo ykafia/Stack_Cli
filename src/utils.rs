@@ -1,6 +1,9 @@
 extern crate reqwest;
 extern crate select;
+extern crate dialoguer;
 
+
+use dialoguer::{theme::ColorfulTheme, Input, Select};
 use select::document::Document;
 use select::predicate::Class;
 use std::fmt::{Display, Formatter, Result};
@@ -18,14 +21,7 @@ where
         Some(x) => x,
         None => "Relevance".to_string(),
     };
-    // let mut stack_url = ScrapUri {
-    //     base: "https://stackoverflow.com/".to_string(),
-    //     extension: "search?".to_string(),
-    // };
-    // stack_url.extension = stack_url.extension + &"page=" + &p.to_string();
-    // stack_url.extension = stack_url.extension + &"&tab=" + &t.to_string();
-    // stack_url.extension = stack_url.extension + &"&q=".to_string() + &keywords.to_query();
-    // stack_url
+    
     return reqwest::Url::parse_with_params(
         "https://stackoverflow.com/search?",
         &[
@@ -38,14 +34,13 @@ where
 }
 
 pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<QuestionChoice> {
+    //TODO: return a "Search again"
     
     let mut result: Vec<QuestionChoice> = Vec::new();
     let resp = client.get(&url.to_string()).send().unwrap();
     let document = Document::from_read(resp).unwrap();
 
-    // finding all instances of our class of interest
     for node in document.find(Class("summary")) {
-        // grabbing the story rank
         let link = node
             .find(Class("question-hyperlink"))
             .next()
@@ -57,15 +52,50 @@ pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<Questio
             .next()
             .unwrap()
             .text();
-        //let excerpt = node.find(Class("excerpt")).next().unwrap().text();
 
-        // printing out | rank | story headline
-        
         result.push(QuestionChoice {
             question: question,
             link: link.to_string(),
         });
     }
+    return result;
+}
+
+pub fn display_QA(url: &reqwest::Url, client: &reqwest::Client) -> String{
+    let resp = client.get(&url.to_string()).send().unwrap();
+    let document = Document::from_read(resp).unwrap();
+    let question = document.find(Class("post-text")).next().unwrap().text();
+    let accepted_answer = document.find(Class("accepted-answer")).next().unwrap().text();
+    println!("{}\n\n\n{}",question,accepted_answer);
+    let choices = &["Return","Quit"];
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("What to do ?")
+        .items(choices)
+        .interact()
+        .unwrap();
+    return choices[selection].to_string();
+}
+pub fn question_check(values: &mut Vec<QuestionChoice>) -> String {
+    let selects = values;
+    selects.push(QuestionChoice {
+        question: "Return".to_string(),
+        link: "Return".to_string(),
+    });
+    selects.push(QuestionChoice {
+        question: "Quit".to_string(),
+        link: "Quit".to_string(),
+    });
+    let tmp: Vec<String> = selects.iter().map(|s| s.to_string()).collect();
+    let checks: Vec<&str> = tmp.iter().map(|s| &**s).collect();
+    
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Pick your Question")
+        .items(checks.as_slice())
+        .interact()
+        .unwrap();
+
+    println!("You chose  :{}", selects[selection].question);
+    let result = selects[selection].link.clone();
     return result;
 }
 

@@ -3,10 +3,12 @@ extern crate dialoguer;
 extern crate reqwest;
 extern crate select;
 
-mod request_builder;
+mod utils;
+
+use dialoguer::{Input};
 use argparse::{ArgumentParser, List, Store, StoreTrue};
-use dialoguer::{theme::ColorfulTheme, Input, Select};
-use request_builder::*;
+use utils::*;
+
 
 fn main() {
     let mut verbose = false;
@@ -38,6 +40,9 @@ fn main() {
     browser(keywords, tab)
 }
 fn browser(keywords: Vec<String>, tab: String) {
+    //TODO : remove the link queue
+    //TODO : separate the search and the answer checking
+
     let mut quit = false;
     let client = reqwest::Client::new();
     let mut pages: Vec<reqwest::Url> = Vec::new();
@@ -60,6 +65,7 @@ fn browser(keywords: Vec<String>, tab: String) {
         } else if choice == "Result" {
             pages.pop();
         } else {
+            
             println!("link {}",choice);
             match reqwest::Url::parse(&("https://stackoverflow.com/".to_string()+&choice)) {
                 Ok(x) => pages.push(x),
@@ -69,26 +75,3 @@ fn browser(keywords: Vec<String>, tab: String) {
     }
 }
 
-fn question_check(values: &mut Vec<QuestionChoice>) -> String {
-    let selects = values;
-    selects.push(QuestionChoice {
-        question: "Return".to_string(),
-        link: "Return".to_string(),
-    });
-    selects.push(QuestionChoice {
-        question: "Quit".to_string(),
-        link: "Quit".to_string(),
-    });
-    let tmp: Vec<String> = selects.iter().map(|s| s.to_string()).collect();
-    let checks: Vec<&str> = tmp.iter().map(|s| &**s).collect();
-    
-    let selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("Pick your Question")
-        .items(checks.as_slice())
-        .interact()
-        .unwrap();
-
-    println!("You chose  :{}", selects[selection].question);
-    let result = selects[selection].link.clone();
-    return result;
-}
