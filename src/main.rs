@@ -5,10 +5,11 @@ extern crate select;
 
 mod utils;
 
-use dialoguer::{Input};
 use argparse::{ArgumentParser, List, /*Store,*/ StoreTrue};
+use dialoguer::Input;
 use utils::*;
 
+use console::Term;
 
 fn main() {
     let mut verbose = false;
@@ -39,79 +40,50 @@ fn main() {
     }
     browser(keywords)
 }
-// fn browser(keywords: Vec<String>, tab: String) {
-//     //TODO : remove the link queue
-//     //TODO : separate the search and the answer checking
 
-//     let mut quit = false;
-//     let client = reqwest::Client::new();
-//     let mut pages: Vec<reqwest::Url> = Vec::new();
-
-//     pages.push(build_request(keywords, Some(tab), None));
-//     while !quit {
-//         println!("first unwrap");
-//         let last =  match pages.last(){
-//             Some(x) => x,
-//             None => {
-//                 println!("Could not find last value");
-//                 quit = true;
-//                 &pages[0]
-//             }
-//         };
-//         let mut search_list = stack_search(last, &client);
-//         let choice = question_check(&mut search_list);
-//         if choice == "Quit" {
-//             quit = true;
-//         } else if choice == "Result" {
-//             pages.pop();
-//         } else {
-            
-//             println!("link {}",choice);
-//             match reqwest::Url::parse(&("https://stackoverflow.com/".to_string()+&choice)) {
-//                 Ok(x) => pages.push(x),
-//                 Err(e) => println!("The link couldn't be processed\nError : {}",e)
-//             };
-//         }
-//     }
-// }
-
-fn browser(keywords: Vec<String>){
+fn browser(keywords: Vec<String>) {
+    let term = Term::stdout();
     let mut quit = false;
     let client = reqwest::Client::new();
     let mut req = build_request(keywords, None, None);
     let mut search_list = stack_search(&req, &client);
-    while !quit{
-        match question_check(&mut search_list).as_str(){
+    while !quit {
+        term.clear_screen().unwrap();
+        match question_check(&mut search_list).as_str() {
             "Search Again" => {
                 let input = Input::<String>::new()
                     .with_prompt("Your search")
                     .interact()
                     .unwrap();
                 let kw = input.split_to_vec();
-                req = build_request(kw,None,None);
-                search_list = stack_search(&req,&client);
-            },
-            "Quit" => quit = true,
-            x =>  {
-                let url = reqwest::Url::parse(&("https://stackoverflow.com/".to_string()+x)).unwrap();
-                match display_qa(&url,&client).as_str() {
+                req = build_request(kw, None, None);
+                search_list = stack_search(&req, &client);
+            }
+            "Quit" => {
+                quit = true;
+                term.clear_screen().unwrap();
+            }
+            x => {
+                let url =
+                    reqwest::Url::parse(&("https://stackoverflow.com/".to_string() + x)).unwrap();
+                match display_qa(&url, &client,&term).as_str() {
                     "Return" => {
                         let input = Input::<String>::new()
                             .with_prompt("Your search")
                             .interact()
                             .unwrap();
                         let kw = input.split_to_vec();
-                        req = build_request(kw,None,None);
-                        search_list = stack_search(&req,&client);
-                    },
+                        req = build_request(kw, None, None);
+                        search_list = stack_search(&req, &client);
+                    }
                     "Quit" => quit = true,
                     _ => {
                         println!("This choice wasn't supposed to happen :c");
-                        quit =true;
+                        quit = true;
+                        term.clear_screen().unwrap();
                     }
-                } 
+                }
             }
         }
     }
 }
-

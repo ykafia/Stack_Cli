@@ -1,7 +1,6 @@
+extern crate dialoguer;
 extern crate reqwest;
 extern crate select;
-extern crate dialoguer;
-
 
 use dialoguer::{theme::ColorfulTheme, Select};
 use select::document::Document;
@@ -21,7 +20,7 @@ where
         Some(x) => x,
         None => "Relevance".to_string(),
     };
-    
+
     return reqwest::Url::parse_with_params(
         "https://stackoverflow.com/search?",
         &[
@@ -34,8 +33,6 @@ where
 }
 
 pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<QuestionChoice> {
-
-    
     let mut result: Vec<QuestionChoice> = Vec::new();
     let resp = client.get(&url.to_string()).send().unwrap();
     let document = Document::from_read(resp).unwrap();
@@ -62,14 +59,19 @@ pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<Questio
 }
 
 /// This function displays the questions and answers from a stack overflow link
-pub fn display_qa(url: &reqwest::Url, client: &reqwest::Client) -> String{
-    
+pub fn display_qa(url: &reqwest::Url, client: &reqwest::Client, term:&console::Term) -> String {
+    //TODO : use the term variable
+    //TODO : better scrap the answer
     let resp = client.get(&url.to_string()).send().unwrap();
     let document = Document::from_read(resp).unwrap();
     let question = document.find(Class("post-text")).next().unwrap().text();
-    let accepted_answer = document.find(Class("accepted-answer")).next().unwrap().text();
-    println!("{}\n\n\n{}",question,accepted_answer);
-    let choices = &["Return","Quit"];
+    let accepted_answer = document
+        .find(Class("accepted-answer"))
+        .next()
+        .unwrap()
+        .text();
+    println!("{}\n\n\n{}", question, accepted_answer);
+    let choices = &["Return", "Quit"];
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("What to do ?")
         .items(choices)
@@ -80,7 +82,6 @@ pub fn display_qa(url: &reqwest::Url, client: &reqwest::Client) -> String{
 
 /// Lets the user choose a question from a list of question choices
 pub fn question_check(values: &mut Vec<QuestionChoice>) -> String {
- 
     let selects = values;
     selects.push(QuestionChoice {
         question: "Return".to_string(),
@@ -96,7 +97,7 @@ pub fn question_check(values: &mut Vec<QuestionChoice>) -> String {
     });
     let tmp: Vec<String> = selects.iter().map(|s| s.to_string()).collect();
     let checks: Vec<&str> = tmp.iter().map(|s| &**s).collect();
-    
+
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Pick your Question")
         .items(checks.as_slice())
@@ -107,7 +108,6 @@ pub fn question_check(values: &mut Vec<QuestionChoice>) -> String {
     let result = selects[selection].link.clone();
     return result;
 }
-
 
 /// Struct containing the question plus its url
 pub struct QuestionChoice {
