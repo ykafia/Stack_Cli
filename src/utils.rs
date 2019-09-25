@@ -3,7 +3,7 @@ extern crate select;
 extern crate dialoguer;
 
 
-use dialoguer::{theme::ColorfulTheme, Input, Select};
+use dialoguer::{theme::ColorfulTheme, Select};
 use select::document::Document;
 use select::predicate::Class;
 use std::fmt::{Display, Formatter, Result};
@@ -34,7 +34,7 @@ where
 }
 
 pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<QuestionChoice> {
-    //TODO: return a "Search again"
+
     
     let mut result: Vec<QuestionChoice> = Vec::new();
     let resp = client.get(&url.to_string()).send().unwrap();
@@ -47,12 +47,12 @@ pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<Questio
             .unwrap()
             .attr("href")
             .unwrap();
-        let question = node
+        let mut question = node
             .find(Class("question-hyperlink"))
             .next()
             .unwrap()
             .text();
-
+        question.remove(0);
         result.push(QuestionChoice {
             question: question,
             link: link.to_string(),
@@ -61,7 +61,9 @@ pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<Questio
     return result;
 }
 
-pub fn display_QA(url: &reqwest::Url, client: &reqwest::Client) -> String{
+/// This function displays the questions and answers from a stack overflow link
+pub fn display_qa(url: &reqwest::Url, client: &reqwest::Client) -> String{
+    
     let resp = client.get(&url.to_string()).send().unwrap();
     let document = Document::from_read(resp).unwrap();
     let question = document.find(Class("post-text")).next().unwrap().text();
@@ -75,11 +77,18 @@ pub fn display_QA(url: &reqwest::Url, client: &reqwest::Client) -> String{
         .unwrap();
     return choices[selection].to_string();
 }
+
+/// Lets the user choose a question from a list of question choices
 pub fn question_check(values: &mut Vec<QuestionChoice>) -> String {
+ 
     let selects = values;
     selects.push(QuestionChoice {
         question: "Return".to_string(),
         link: "Return".to_string(),
+    });
+    selects.push(QuestionChoice {
+        question: "Search Again".to_string(),
+        link: "Search Again".to_string(),
     });
     selects.push(QuestionChoice {
         question: "Quit".to_string(),
@@ -99,15 +108,12 @@ pub fn question_check(values: &mut Vec<QuestionChoice>) -> String {
     return result;
 }
 
-pub trait ToStr {
-    fn to_str(&self) -> &str;
-}
 
+/// Struct containing the question plus its url
 pub struct QuestionChoice {
     pub question: String,
     pub link: String,
 }
-
 impl Display for QuestionChoice {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{}", self.question)
