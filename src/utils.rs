@@ -21,7 +21,7 @@ where
         None => "Relevance".to_string(),
     };
 
-    return reqwest::Url::parse_with_params(
+    reqwest::Url::parse_with_params(
         "https://stackoverflow.com/search?",
         &[
             ("page", p.to_string()),
@@ -29,7 +29,7 @@ where
             ("q", keywords.to_spaced_string()),
         ],
     )
-    .unwrap();
+    .unwrap()
 }
 
 pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<QuestionChoice> {
@@ -44,40 +44,86 @@ pub fn stack_search(url: &reqwest::Url, client: &reqwest::Client) -> Vec<Questio
             .unwrap()
             .attr("href")
             .unwrap();
-        let mut question = node
+        let mut question_text = node
             .find(Class("question-hyperlink"))
             .next()
             .unwrap()
             .text();
-        question.remove(0);
+        question_text.remove(0);
         result.push(QuestionChoice {
-            question: question,
+            question: question_text,
             link: link.to_string(),
         });
     }
-    return result;
+    result
 }
 
 /// This function displays the questions and answers from a stack overflow link
-pub fn display_qa(url: &reqwest::Url, client: &reqwest::Client, term:&console::Term) -> String {
-    //TODO : use the term variable
-    //TODO : better scrap the answer
+pub fn display_qa(url: &reqwest::Url, client: &reqwest::Client, term: &console::Term) -> String {
+
     let resp = client.get(&url.to_string()).send().unwrap();
     let document = Document::from_read(resp).unwrap();
-    let question = document.find(Class("post-text")).next().unwrap().text();
+    let mut question = document
+        .find(Class("question"))
+        .next()
+        .unwrap()
+        .find(Class("post-text"))
+        .next()
+        .unwrap()
+        .text();
     let accepted_answer = document
         .find(Class("accepted-answer"))
         .next()
         .unwrap()
+        .find(Class("post-text"))
+        .next()
+        .unwrap()
         .text();
-    println!("{}\n\n\n{}", question, accepted_answer);
-    let choices = &["Return", "Quit"];
-    let selection = Select::with_theme(&ColorfulTheme::default())
-        .with_prompt("What to do ?")
-        .items(choices)
-        .interact()
-        .unwrap();
-    return choices[selection].to_string();
+    question = question
+        .chars()
+        .map(|x| match x {
+            '\n' => ' ',
+            _ => x,
+        })
+        .collect();
+    let mut display = "Question";
+    let mut quit = false;
+    let mut result = "".to_string();
+    while !quit{
+        match display{
+            "Question" => term.write_str(&question).unwrap(),
+            "Answer" => term.write_str(&accepted_answer).unwrap(),
+            _ => term.write_str("This was not supposed to happen").unwrap()
+        }
+        let choices = match display{
+            "Question" => &["See Answer","Return", "Quit"],
+            "Answer" => &["See Question","Return", "Quit"],
+            _ => &["...","Return", "Quit"]
+        };
+        
+        
+        let selection = Select::with_theme(&ColorfulTheme::default())
+            .with_prompt("What to do ?")
+            .items(choices)
+            .interact()
+            .unwrap();
+
+        term.clear_screen().unwrap();
+        match choices[selection]{
+            "See Answer" => display = "Answer",
+            "See Question" => display = "Question",
+            _ => {
+                result = choices[selection].to_string();
+                quit = true;
+            }
+        }
+        
+    }
+    result
+    
+    
+
+    
 }
 
 /// Lets the user choose a question from a list of question choices
@@ -105,8 +151,7 @@ pub fn question_check(values: &mut Vec<QuestionChoice>) -> String {
         .unwrap();
 
     println!("You chose  :{}", selects[selection].question);
-    let result = selects[selection].link.clone();
-    return result;
+    selects[selection].link.clone()
 }
 
 /// Struct containing the question plus its url
@@ -141,6 +186,7 @@ impl SplitToVec for String {
     fn split_to_vec(&self) -> Vec<String> {
         let x = self.split_whitespace();
         let result: Vec<String> = x.map(|s| s.to_string()).collect();
-        return result;
+
+        result
     }
 }

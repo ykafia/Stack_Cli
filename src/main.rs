@@ -31,7 +31,7 @@ fn main() {
             .add_option(&["-v", "--verbose"], StoreTrue, "Verbosity");
         ap.parse_args_or_exit();
     }
-    if keywords.len() == 0 {
+    if keywords.is_empty() {
         let input = Input::<String>::new()
             .with_prompt("Your search")
             .interact()
@@ -66,7 +66,7 @@ fn browser(keywords: Vec<String>) {
             x => {
                 let url =
                     reqwest::Url::parse(&("https://stackoverflow.com/".to_string() + x)).unwrap();
-                match display_qa(&url, &client,&term).as_str() {
+                match display_qa(&url, &client, &term).as_str() {
                     "Return" => {
                         let input = Input::<String>::new()
                             .with_prompt("Your search")
